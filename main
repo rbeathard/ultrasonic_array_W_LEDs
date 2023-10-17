@@ -1,0 +1,100 @@
+import RPi.GPIO as GPIO
+import time
+
+# Constant Definitions
+MAX_DISTANCE = 30  # Maximum distance to consider for collision detection (in centimeters)
+MID_DISTANCE = 60  # Middle distance to trigger the yellow LED (in centimeters)
+DELAY_BETWEEN_MEASUREMENTS = 0.1  # Delay between distance measurements (in seconds)
+
+# GPIO Pin Definitions for Ultrasonic Sensors and LEDs
+SENSOR_PINS = [
+    {"trigger": 23, "echo": 24},  # Sensor 1
+    {"trigger": 17, "echo": 27},  # Sensor 2
+    {"trigger": 5, "echo": 6},    # Sensor 3
+]
+
+LED_PINS = {
+    "green": 12,  # Green LED
+    "yellow": 16,  # Yellow LED
+    "red": 20,  # Red LED
+}
+
+
+def setup_gpio():
+    # Initialize GPIO
+    GPIO.setmode(GPIO.BCM)
+    for sensor in SENSOR_PINS:
+        GPIO.setup(sensor["trigger"], GPIO.OUT)
+        GPIO.setup(sensor["echo"], GPIO.IN)
+    for led_pin in LED_PINS.values():
+        GPIO.setup(led_pin, GPIO.OUT)
+
+
+def cleanup_gpio():
+    # Clean up GPIO
+    GPIO.cleanup()
+
+
+def measure_distance(trigger_pin, echo_pin):
+    # Send a trigger pulse to the sensor and calculate distance
+    GPIO.output(trigger_pin, GPIO.LOW)
+    time.sleep(0.2)
+    GPIO.output(trigger_pin, GPIO.HIGH)
+    time.sleep(0.00001)
+    GPIO.output(trigger_pin, GPIO.LOW)
+
+    while GPIO.input(echo_pin) == 0:
+        pulse_start = time.time()
+
+    while GPIO.input(echo_pin) == 1:
+        pulse_end = time.time()
+
+    pulse_duration = pulse_end - pulse_start
+    distance = pulse_duration * 17150  # Speed of sound (343 m/s) / 2
+    return distance
+
+
+def control_leds(status):
+    # Control the LEDs based on obstacle detection status
+    GPIO.output(LED_PINS["green"], GPIO.LOW)
+    GPIO.output(LED_PINS["yellow"], GPIO.LOW)
+    GPIO.output(LED_PINS["red"], GPIO.LOW)
+
+    if status == "no_obstacle":
+        GPIO.output(LED_PINS["green"], GPIO.HIGH)
+    elif status == "yellow_obstacle":
+        GPIO.output(LED_PINS["yellow"], GPIO.HIGH)
+    elif status == "red_obstacle":
+        GPIO.output(LED_PINS["red"], GPIO.HIGH)
+
+
+def check_for_obstacles():
+    try:
+        while True:
+            obstacle_status = "no_obstacle"
+
+            for idx, sensor in enumerate(SENSOR_PINS, 1):
+                dist = measure_distance(sensor["trigger"], sensor["echo"])
+                print(f"Sensor {idx}: {dist:.2f} cm")
+
+                if dist < MAX_DISTANCE:
+                    print("Obstacle detected. Stop the robot!")
+                    obstacle_status = "red_obstacle"
+                    # Implement code to stop your robot here
+                elif MAX_DISTANCE < dist <= MID_DISTANCE:
+                    obstacle_status = "yellow_obstacle"
+
+            control_leds(obstacle_status)
+            time.sleep(DELAY_BETWEEN_MEASUREMENTS)
+
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    setup_gpio()
+    try:
+        check_for_obstacles()
+    finally:
+        control_leds("no_obstacle")  # Turn off LEDs
+        cleanup_gpio()
