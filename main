@@ -1,3 +1,4 @@
+
 import RPi.GPIO as GPIO
 import time
 
@@ -75,7 +76,7 @@ def check_for_obstacles():
 
             for idx, sensor in enumerate(SENSOR_PINS, 1):
                 dist = measure_distance(sensor["trigger"], sensor["echo"])
-                print(f"Sensor {idx}: {dist:.2f} cm")
+                print(f"Sensor {idx}: {dist:.2f} cm")  # Print measured distance for each sensor
 
                 if dist < MAX_DISTANCE:
                     print("Obstacle detected. Stop the robot!")
