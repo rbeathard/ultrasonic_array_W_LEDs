@@ -3,8 +3,8 @@ import RPi.GPIO as GPIO
 import time
 
 # Constant Definitions
-MAX_DISTANCE = 30  # Maximum distance to consider for collision detection (in centimeters)
-MID_DISTANCE = 60  # Middle distance to trigger the yellow LED (in centimeters)
+MAX_DISTANCE = 31  # Maximum distance to consider for collision detection (in centimeters)
+MID_DISTANCE = 61  # Middle distance to trigger the yellow LED (in centimeters)
 DELAY_BETWEEN_MEASUREMENTS = 0.1  # Delay between distance measurements (in seconds)
 
 # GPIO Pin Definitions for Ultrasonic Sensors and LEDs
